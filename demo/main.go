@@ -3,17 +3,14 @@ package main
 import (
 	"fmt"
 	"math"
+	"time"
 )
 
 func main() {
-	perim := Path{
-		{1, 1},
-		{5, 1},
-		{5, 4},
-		{1, 1},
-	}
-
-	fmt.Println(perim.Distance())
+	go spinner(100 * time.Millisecond)
+	const n = 45
+	fibN := fib(n)
+	fmt.Printf("\rFibonacci(%d) = %d\n", n, fibN)
 }
 
 func hasPrefix(s, prefix string) bool {
@@ -53,4 +50,21 @@ func (path Path) Distance() float64 {
 	}
 
 	return sum
+}
+
+func spinner(delay time.Duration) {
+	for {
+		for _, r := range `-\|/` {
+			fmt.Printf("\r%c", r)
+			time.Sleep(delay)
+		}
+	}
+}
+
+func fib(x int) int {
+	if x < 2 {
+		return x
+	}
+
+	return fib(x-1) + fib(x-2)
 }
