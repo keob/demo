@@ -11,6 +11,8 @@ import (
 )
 
 var verbose = flag.Bool("v", false, "show verbose progress message")
+var sema = make(chan struct{}, 20)
+var done = make(chan struct{})
 
 func main() {
 	flag.Parse()
@@ -43,6 +45,11 @@ func main() {
 loop:
 	for {
 		select {
+		case <-done:
+			for range fileSizes {
+
+			}
+			return
 		case size, ok := <-fileSizes:
 			if !ok {
 				break loop
@@ -57,7 +64,25 @@ loop:
 	printDiskUsage(nfiles, nbytes)
 }
 
+func cancelled() bool {
+	go func() {
+		os.Stdin.Read(make([]byte, 1))
+		close(done)
+	}()
+
+	select {
+	case <-done:
+		return true
+	default:
+		return false
+	}
+}
+
 func walkDir(dir string, n *sync.WaitGroup, fileSizes chan<- int64) {
+	if cancelled() {
+		return
+	}
+
 	defer n.Done()
 
 	for _, entry := range dirents(dir) {
@@ -72,6 +97,14 @@ func walkDir(dir string, n *sync.WaitGroup, fileSizes chan<- int64) {
 }
 
 func dirents(dir string) []os.FileInfo {
+	select {
+	case sema <- struct{}{}:
+	case <-done:
+		return nil
+	}
+
+	defer func() { <-sema }()
+
 	entries, err := ioutil.ReadDir(dir)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "du: %v\n", err)
