@@ -21,6 +21,15 @@ func hasSuffix(s, suffix string) bool {
 	return len(s) >= len(suffix) && s[len(s)-len(suffix):] == suffix
 }
 
+func isPalindrome(s string) bool {
+	for i := range s {
+		if s[i] != s[len(s)-1-i] {
+			return false
+		}
+	}
+	return true
+}
+
 func contains(s, substr string) bool {
 	for i := 0; i < len(s); i++ {
 		if hasPrefix(s[i:], substr) {
